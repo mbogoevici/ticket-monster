@@ -170,25 +170,8 @@ public class BookingService extends BaseEntityService<Booking> {
                 }
             }
             if (failedSections.isEmpty()) {
-                for (Section section : seatsPerSection.keySet()) {
-                    // allocation was successful, begin generating tickets
-                    // associate each allocated seat with a ticket, assigning a price category to it
-                    final Map<TicketCategory, TicketRequest> ticketRequestsByCategories = ticketRequestsPerSection.get(section);
-                    AllocatedSeats allocatedSeats = seatsPerSection.get(section);
-                    allocatedSeats.markOccupied();
-                    int seatCounter = 0;
-                    // Now, add a ticket for each requested ticket to the booking
-                    for (TicketCategory ticketCategory : ticketRequestsByCategories.keySet()) {
-                        final TicketRequest ticketRequest = ticketRequestsByCategories.get(ticketCategory);
-                        final TicketPrice ticketPrice = ticketPricesById.get(ticketRequest.getTicketPrice());
-                        for (int i = 0; i < ticketRequest.getQuantity(); i++) {
-                            Ticket ticket = new Ticket(allocatedSeats.getSeats().get(seatCounter + i), ticketCategory, ticketPrice.getPrice());
-                            // getEntityManager().persist(ticket);
-                            booking.getTickets().add(ticket);
-                        }
-                        seatCounter += ticketRequest.getQuantity();
-                    }
-                }
+                List<Ticket> tickets = generateTickets(ticketPricesById, ticketRequestsPerSection, seatsPerSection);
+                booking.getTickets().addAll(tickets);
                 // Persist the booking, including cascaded relationships
                 booking.setPerformance(performance);
                 booking.setCancellationCode("abc");
@@ -219,6 +202,29 @@ public class BookingService extends BaseEntityService<Booking> {
             // Throwing the exception causes an automatic rollback
             throw new RestServiceException(Response.status(Response.Status.BAD_REQUEST).entity(errors).build());
         }
+    }
+
+    private List<Ticket> generateTickets(Map<Long, TicketPrice> ticketPricesById, Map<Section, Map<TicketCategory, TicketRequest>> ticketRequestsPerSection, Map<Section, AllocatedSeats> seatsPerSection) {
+        List<Ticket> tickets = new ArrayList<Ticket>();
+        for (Section section : seatsPerSection.keySet()) {
+            // allocation was successful, begin generating tickets
+            // associate each allocated seat with a ticket, assigning a price category to it
+            final Map<TicketCategory, TicketRequest> ticketRequestsByCategories = ticketRequestsPerSection.get(section);
+            AllocatedSeats allocatedSeats = seatsPerSection.get(section);
+            seatAllocationService.finalizeAllocation(allocatedSeats);
+            int seatCounter = 0;
+            // Now, add a ticket for each requested ticket to the booking
+            for (TicketCategory ticketCategory : ticketRequestsByCategories.keySet()) {
+                final TicketRequest ticketRequest = ticketRequestsByCategories.get(ticketCategory);
+                final TicketPrice ticketPrice = ticketPricesById.get(ticketRequest.getTicketPrice());
+                for (int i = 0; i < ticketRequest.getQuantity(); i++) {
+                    Ticket ticket = new Ticket(allocatedSeats.getSeats().get(seatCounter + i), ticketCategory, ticketPrice.getPrice());
+                    // getEntityManager().persist(ticket);
+                    tickets.add(ticket);
+                }
+                seatCounter += ticketRequest.getQuantity();
+            }
+        } return tickets;
     }
 
     /**

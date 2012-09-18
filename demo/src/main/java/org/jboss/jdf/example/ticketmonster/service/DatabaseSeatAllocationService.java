@@ -43,6 +43,11 @@ public class DatabaseSeatAllocationService implements Serializable, SeatAllocati
         }
     }
 
+    @Override
+    public void finalizeAllocation(AllocatedSeats allocatedSeats) {
+       allocatedSeats.markOccupied();
+    }
+
     private SectionAllocation retrieveSectionAllocationExclusively(Section section, Performance performance) {
         SectionAllocation sectionAllocationStatus = (SectionAllocation) entityManager.createQuery(
 													"select s from SectionAllocation s where " +
