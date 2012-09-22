@@ -3,7 +3,9 @@ package org.jboss.jdf.ticketmonster.datagrid;
 import java.util.List;
 
 import javax.enterprise.inject.Alternative;
+import javax.inject.Inject;
 
+import org.infinispan.api.BasicCacheContainer;
 import org.jboss.jdf.example.ticketmonster.model.Performance;
 import org.jboss.jdf.example.ticketmonster.model.Seat;
 import org.jboss.jdf.example.ticketmonster.model.Section;
@@ -15,6 +17,9 @@ import org.jboss.jdf.example.ticketmonster.service.SeatAllocationService;
  */
 @Alternative
 public class DatagridSeatAllocationService implements SeatAllocationService {
+
+    @Inject
+    BasicCacheContainer container;
 
     @Override
     public AllocatedSeats allocateSeats(Section section, Performance performance, int seatCount, boolean contiguous) {

@@ -169,7 +169,16 @@
                     <groupId>javax.annotation</groupId>
                     <artifactId>jsr250-api</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>org.javassist</groupId>
+                    <artifactId>javassist</artifactId>
+                </exclusion>
             </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.javassist</groupId>
+            <artifactId>javassist</artifactId>
+            <version>3.16.1-GA</version>
         </dependency>
         <dependency>
             <groupId>org.jboss.errai</groupId>
@@ -417,27 +426,16 @@
         </profile>
 
         <profile>
-            <id>infinispan</id>
+            <id>datagrid</id>
+            <!-- Import the infinispan core -->
             <dependencies>
                 <dependency>
                     <groupId>org.infinispan</groupId>
-                    <artifactId>infinispan-client-hotrod</artifactId>
+                    <artifactId>infinispan-core</artifactId>
                 </dependency>
             </dependencies>
+
             <build>
-                <!--<plugins>-->
-                    <!--<plugin>-->
-                        <!--<artifactId>maven-compiler-plugin</artifactId>-->
-                        <!--<configuration>-->
-                            <!--<source>-->
-                                <!--<includes>-->
-                                    <!--<include>src/main/java</include>-->
-                                    <!--<include>src/datagrid/java</include>-->
-                                <!--</includes>-->
-                            <!--</source>-->
-                        <!--</configuration>-->
-                    <!--</plugin>-->
-                <!--</plugins>-->
                 <plugins>
                 <plugin>
                     <!-- This plugin will add the src/tomcat/java source
