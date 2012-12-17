@@ -32,7 +32,7 @@
             line below to use version 1.0.0.M10-redhat-1 which is a release certified 
             to work with JBoss EAP 6. It requires you have access to the JBoss EAP 6 
             maven repository. -->
-        <jboss.bom.version>1.0.1.CR4</jboss.bom.version>
+        <jboss.bom.version>1.0.1.Final</jboss.bom.version>
         <buildhelper.plugin.version>1.7</buildhelper.plugin.version>
     </properties>
 
@@ -169,16 +169,7 @@
                     <groupId>javax.annotation</groupId>
                     <artifactId>jsr250-api</artifactId>
                 </exclusion>
-                <exclusion>
-                    <groupId>org.javassist</groupId>
-                    <artifactId>javassist</artifactId>
-                </exclusion>
             </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.javassist</groupId>
-            <artifactId>javassist</artifactId>
-            <version>3.16.1-GA</version>
         </dependency>
         <dependency>
             <groupId>org.jboss.errai</groupId>
@@ -277,6 +268,11 @@
             <artifactId>jackson-core-asl</artifactId>
             <version>1.8.1</version>
             <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-core</artifactId>
         </dependency>
 
     </dependencies>
@@ -425,42 +421,6 @@
             </build>
         </profile>
 
-        <profile>
-            <id>datagrid</id>
-            <!-- Import the infinispan core -->
-            <dependencies>
-                <dependency>
-                    <groupId>org.infinispan</groupId>
-                    <artifactId>infinispan-core</artifactId>
-                </dependency>
-            </dependencies>
-
-            <build>
-                <plugins>
-                <plugin>
-                    <!-- This plugin will add the src/tomcat/java source
-                   folder -->
-                    <groupId>org.codehaus.mojo</groupId>
-                    <artifactId>build-helper-maven-plugin</artifactId>
-                    <version>${buildhelper.plugin.version}</version>
-                    <executions>
-                        <execution>
-                            <id>add-source</id>
-                            <phase>generate-sources</phase>
-                            <goals>
-                                <goal>add-source</goal>
-                            </goals>
-                            <configuration>
-                                <sources>
-                                    <source>src/datagrid/java</source>
-                                </sources>
-                            </configuration>
-                        </execution>
-                    </executions>
-                </plugin>
-                </plugins>
-            </build>
-        </profile>
 
         <profile>
             <!-- An optional Arquillian testing profile that executes tests 

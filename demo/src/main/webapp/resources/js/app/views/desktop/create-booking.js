@@ -96,6 +96,16 @@ define([
         render:function () {
 
             var self = this;
+            $.ajax({url: (config.baseUrl + "rest/carts"),
+                    data:JSON.stringify({performance:this.model.performanceId}),
+                    type:"POST",
+                    dataType:"json",
+                    contentType:"application/json",
+                    success: function (cart) {
+                        self.model.cartId = cart.id;
+                    }
+                }
+            );
             $.getJSON(config.baseUrl + "rest/shows/" + this.model.showId, function (selectedShow) {
 
                 self.currentPerformance = _.find(selectedShow.performances, function (item) {
@@ -141,8 +151,8 @@ define([
             bookingRequest.email = this.model.bookingRequest.email;
             bookingRequest.performance = this.model.performanceId
             $("input[name='submit']").attr("disabled", true)
-            $.ajax({url: (config.baseUrl + "rest/bookings"),
-                data:JSON.stringify(bookingRequest),
+            $.ajax({url: (config.baseUrl + "rest/bookings/cart/" + this.model.cartId),
+                data:JSON.stringify({email:this.model.bookingRequest.email}),
                 type:"POST",
                 dataType:"json",
                 contentType:"application/json",
@@ -166,6 +176,7 @@ define([
         },
         addQuantities:function () {
             var self = this;
+            var ticketRequests = [];
             _.each(this.ticketCategoriesView.model, function (model) {
                 if (model.quantity != undefined) {
                     var found = false;
@@ -178,8 +189,16 @@ define([
                     if (!found) {
                         self.model.bookingRequest.tickets.push({ticketPrice:model.ticketPrice, quantity:model.quantity});
                     }
+                    ticketRequests.push({ticketPrice:model.ticketPrice.id, quantity:model.quantity})
                 }
             });
+
+            $.ajax({url: (config.baseUrl + "rest/carts/" + this.model.cartId),
+                data:JSON.stringify(ticketRequests),
+                type:"POST",
+                dataType:"json",
+                contentType:"application/json"}
+            );
             this.ticketCategoriesView.model = null;
             $('option:selected', 'select').removeAttr('selected');
             this.ticketCategoriesView.render();
