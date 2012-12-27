@@ -14,7 +14,7 @@ public class Cart implements Serializable  {
 
     private String id;
 
-    private Long performanceId;
+    private Performance performance;
 
     private ArrayList<TicketRequest> ticketRequests = new ArrayList<TicketRequest>();
 
@@ -34,12 +34,12 @@ public class Cart implements Serializable  {
         return id;
     }
 
-    public Long getPerformanceId() {
-        return performanceId;
+    public Performance getPerformance() {
+        return performance;
     }
 
-    public void setPerformanceId(Long performanceId) {
-        this.performanceId = performanceId;
+    public void setPerformance(Performance performance) {
+        this.performance = performance;
     }
 
     public List<TicketRequest> getTicketRequests() {

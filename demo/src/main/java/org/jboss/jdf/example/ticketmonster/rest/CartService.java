@@ -14,6 +14,8 @@ import javax.ws.rs.core.MediaType;
 
 import org.jboss.jdf.example.ticketmonster.model.Cart;
 import org.jboss.jdf.example.ticketmonster.model.CartStore;
+import org.jboss.jdf.example.ticketmonster.model.Performance;
+import org.jboss.jdf.example.ticketmonster.model.TicketPrice;
 
 /**
  * @author Marius Bogoevici
@@ -31,7 +33,7 @@ public class CartService {
     @POST
     public Cart openCart(Map<String, String> data) {
         Cart cart = Cart.initialize();
-        cart.setPerformanceId(Long.parseLong(data.get("performance")));
+        cart.setPerformance(entityManager.find(Performance.class, Long.parseLong(data.get("performance"))));
         cartStore.saveCart(cart);
         return cart;
     }
@@ -45,10 +47,11 @@ public class CartService {
     @POST
     @Path("/{id}")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Cart addTicketRequest(@PathParam("id") String id, TicketRequest[] ticketRequests){
+    public Cart addTicketRequest(@PathParam("id") String id, TicketReservationRequest[] ticketRequests){
         Cart cart = cartStore.getCart(id);
-        for (TicketRequest ticketRequest : ticketRequests) {
-            cart.getTicketRequests().add(ticketRequest);
+        for (TicketReservationRequest ticketRequest : ticketRequests) {
+            TicketPrice ticketPrice = entityManager.find(TicketPrice.class, ticketRequest.getTicketPrice());
+            cart.getTicketRequests().add(new TicketRequest(ticketPrice, ticketRequest.getQuantity()));
         }
         return cart;
     }

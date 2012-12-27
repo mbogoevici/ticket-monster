@@ -33,7 +33,6 @@ import org.jboss.jdf.example.ticketmonster.model.Ticket;
 import org.jboss.jdf.example.ticketmonster.model.TicketCategory;
 import org.jboss.jdf.example.ticketmonster.model.TicketPrice;
 import org.jboss.jdf.example.ticketmonster.service.AllocatedSeats;
-import org.jboss.jdf.example.ticketmonster.service.DatabaseSeatAllocationService;
 import org.jboss.jdf.example.ticketmonster.service.SeatAllocationService;
 
 /**
@@ -142,13 +141,13 @@ public class BookingService extends BaseEntityService<Booking> {
             Map<Section, Map<TicketCategory, TicketRequest>> ticketRequestsPerSection
                     = new TreeMap<Section, java.util.Map<TicketCategory, TicketRequest>>(SectionComparator.instance());
             for (TicketRequest ticketRequest : bookingRequest.getTicketRequests()) {
-                final TicketPrice ticketPrice = ticketPricesById.get(ticketRequest.getTicketPrice());
+                final TicketPrice ticketPrice = ticketPricesById.get(ticketRequest.getTicketPrice().getId());
                 if (!ticketRequestsPerSection.containsKey(ticketPrice.getSection())) {
                     ticketRequestsPerSection
                             .put(ticketPrice.getSection(), new HashMap<TicketCategory, TicketRequest>());
                 }
                 ticketRequestsPerSection.get(ticketPrice.getSection()).put(
-                        ticketPricesById.get(ticketRequest.getTicketPrice()).getTicketCategory(), ticketRequest);
+                        ticketPricesById.get(ticketRequest.getTicketPrice().getId()).getTicketCategory(), ticketRequest);
             }
 
             // Now, we can allocate the tickets
@@ -232,7 +231,7 @@ public class BookingService extends BaseEntityService<Booking> {
             BookingRequest bookingRequest = new BookingRequest();
 
             Cart cart = cartStore.getCart(cartId);
-            bookingRequest.setPerformance(cart.getPerformanceId());
+            bookingRequest.setPerformance(cart.getPerformance().getId());
             bookingRequest.setTicketRequests(cart.getTicketRequests());
             bookingRequest.setEmail(data.get("email"));
 
@@ -258,13 +257,13 @@ public class BookingService extends BaseEntityService<Booking> {
             Map<Section, Map<TicketCategory, TicketRequest>> ticketRequestsPerSection
                     = new TreeMap<Section, java.util.Map<TicketCategory, TicketRequest>>(SectionComparator.instance());
             for (TicketRequest ticketRequest : bookingRequest.getTicketRequests()) {
-                final TicketPrice ticketPrice = ticketPricesById.get(ticketRequest.getTicketPrice());
+                final TicketPrice ticketPrice = ticketPricesById.get(ticketRequest.getTicketPrice().getId());
                 if (!ticketRequestsPerSection.containsKey(ticketPrice.getSection())) {
                     ticketRequestsPerSection
                             .put(ticketPrice.getSection(), new HashMap<TicketCategory, TicketRequest>());
                 }
                 ticketRequestsPerSection.get(ticketPrice.getSection()).put(
-                        ticketPricesById.get(ticketRequest.getTicketPrice()).getTicketCategory(), ticketRequest);
+                        ticketPricesById.get(ticketRequest.getTicketPrice().getId()).getTicketCategory(), ticketRequest);
             }
 
             // Now, we can allocate the tickets
@@ -338,7 +337,7 @@ public class BookingService extends BaseEntityService<Booking> {
             // Now, add a ticket for each requested ticket to the booking
             for (TicketCategory ticketCategory : ticketRequestsByCategories.keySet()) {
                 final TicketRequest ticketRequest = ticketRequestsByCategories.get(ticketCategory);
-                final TicketPrice ticketPrice = ticketPricesById.get(ticketRequest.getTicketPrice());
+                final TicketPrice ticketPrice = ticketPricesById.get(ticketRequest.getTicketPrice().getId());
                 for (int i = 0; i < ticketRequest.getQuantity(); i++) {
                     Ticket ticket = new Ticket(allocatedSeats.getSeats().get(seatCounter + i), ticketCategory, ticketPrice.getPrice());
                     // getEntityManager().persist(ticket);

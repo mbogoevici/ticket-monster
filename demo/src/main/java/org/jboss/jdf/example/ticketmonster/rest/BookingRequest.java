@@ -70,10 +70,10 @@ public class BookingRequest {
     Set<Long> getUniquePriceCategoryIds() {
         Set<Long> priceCategoryIds = new HashSet<Long>();
         for (TicketRequest ticketRequest : getTicketRequests()) {
-            if (priceCategoryIds.contains(ticketRequest.getTicketPrice())) {
+            if (priceCategoryIds.contains(ticketRequest.getTicketPrice().getId())) {
                 throw new RuntimeException("Duplicate price category id");
             }
-            priceCategoryIds.add(ticketRequest.getTicketPrice());
+            priceCategoryIds.add(ticketRequest.getTicketPrice().getId());
         }
         return priceCategoryIds;
     }
