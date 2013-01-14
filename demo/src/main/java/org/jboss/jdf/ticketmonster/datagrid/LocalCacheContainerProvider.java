@@ -53,7 +53,7 @@ public class LocalCacheContainerProvider {
 
     private EmbeddedCacheManager manager;
 
-    @Produces
+    @Produces @ApplicationScoped
     public EmbeddedCacheManager getCacheContainer() {
         if (manager == null) {
             GlobalConfiguration glob = new GlobalConfigurationBuilder()
