@@ -1,8 +1,12 @@
 package org.jboss.jdf.example.ticketmonster.model;
 
+import org.jboss.jdf.ticketmonster.datagrid.SeatState;
+
 import static javax.persistence.GenerationType.IDENTITY;
 
+import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -37,7 +41,7 @@ import javax.validation.constraints.NotNull;
  */
 @Entity
 @Table(uniqueConstraints = @UniqueConstraint(columnNames = { "performance_id", "section_id" }))
-public class SectionAllocation {
+public class SectionAllocation implements Serializable {
 
     /* Declaration of fields */
 
@@ -104,7 +108,7 @@ public class SectionAllocation {
      * </p>
      */
     @Lob
-    private boolean allocated[][];
+    private SeatState allocated[][];
 
     /**
      * <p>
@@ -127,7 +131,10 @@ public class SectionAllocation {
     public SectionAllocation(Performance performance, Section section) {
         this.performance = performance;
         this.section = section;
-        this.allocated = new boolean[section.getNumberOfRows()][section.getRowCapacity()];
+        this.allocated = new SeatState[section.getNumberOfRows()][section.getRowCapacity()];
+        for (SeatState[] seatStates : allocated) {
+            Arrays.fill(seatStates, SeatState.FREE);
+        }
     }
 
     /**
@@ -137,8 +144,11 @@ public class SectionAllocation {
     @PostLoad
     void initialize() {
     	if (this.allocated == null) {
-    		this.allocated = new boolean[this.section.getNumberOfRows()][this.section.getRowCapacity()];
-    	}
+    		this.allocated = new SeatState[this.section.getNumberOfRows()][this.section.getRowCapacity()];
+            for (SeatState[] seatStates : allocated) {
+                Arrays.fill(seatStates, SeatState.FREE);
+            }
+        }
     }
 
     /**
@@ -148,7 +158,7 @@ public class SectionAllocation {
      */
     public boolean isAllocated(Seat s) {
         // Examine the allocation matrix, using the row and seat number as indices
-        return allocated[s.getRowNumber() - 1][s.getNumber() - 1];
+        return !allocated[s.getRowNumber() - 1][s.getNumber() - 1].equals(SeatState.FREE);
     }
 
     /**
@@ -159,9 +169,9 @@ public class SectionAllocation {
      * @param contiguous whether the seats must be allocated in a contiguous block or not
      * @return the allocated seats
      */
-    public List<Seat> allocateSeats(int seatCount, boolean contiguous) {
+    public ArrayList<Seat> allocateSeats(int seatCount, boolean contiguous) {
         // The list of seats allocated
-        List<Seat> seats = new ArrayList<Seat>();
+        ArrayList<Seat> seats = new ArrayList<Seat>();
 
         // The seat allocation algorithm starts by iterating through the rows in this section
         for (int rowCounter = 0; rowCounter < section.getNumberOfRows(); rowCounter++) {
@@ -197,15 +207,18 @@ public class SectionAllocation {
         }
         // Simple check to make sure we could actually allocate the required number of seats
         if (seats.size() == seatCount) {
+            for (Seat seat : seats) {
+                allocate(seat.getRowNumber() - 1, seat.getNumber() - 1, 1, SeatState.FREE, SeatState.ALLOCATED);
+            }
             return seats;
         } else {
-            return Collections.emptyList();
+            return new ArrayList<Seat>(0);
         }
     }
 
     public void markOccupied(List<Seat> seats) {
         for (Seat seat : seats) {
-            allocate(seat.getRowNumber()-1, seat.getNumber()-1, 1);
+            allocate(seat.getRowNumber() - 1, seat.getNumber() - 1, 1, SeatState.ALLOCATED, SeatState.OCCUPIED);
         }
     }
 
@@ -220,13 +233,13 @@ public class SectionAllocation {
     private int findFreeGapStart(int row, int startSeat, int size) {
 
         // An array of occupied seats in the row
-        boolean[] occupied = allocated[row];
+        SeatState[] occupied = allocated[row];
         int candidateStart = -1;
 
         // Iterate over the seats, and locate the first free seat block
         for (int i = startSeat; i < occupied.length; i++) {
             // if the seat isn't allocated
-            if (!occupied[i]) {
+            if (occupied[i].equals(SeatState.FREE)) {
                 // then set this as a possible start
                 if (candidateStart == -1) {
                     candidateStart = i;
@@ -253,8 +266,8 @@ public class SectionAllocation {
      * @throws SeatAllocationException if the last seat to allocate is more than the number of seats in the row
      * @throws SeatAllocationException if the seats are already occupied.
      */
-    private void allocate(int row, int start, int size) throws SeatAllocationException {
-        boolean[] occupied = allocated[row];
+    private void allocate(int row, int start, int size, SeatState expected, SeatState finalState) throws SeatAllocationException {
+        SeatState[] occupied = allocated[row];
         if (size <= 0) {
             throw new SeatAllocationException("Number of seats must be greater than zero");
         }
@@ -266,14 +279,14 @@ public class SectionAllocation {
         }
         // Check that seats aren't already occupied
         for (int i = start; i < (start + size); i++) {
-            if (occupied[i]) {
+            if (null == expected || !occupied[i].equals(expected)) {
                 throw new SeatAllocationException("Found occupied seats in the requested block");
             }
         }
 
         // Now that we know we can allocate the seats, set them to occupied in the allocation matrix
         for (int i = start; i < (start + size); i++) {
-            occupied[i] = true;
+            occupied[i] = finalState;
             occupiedCount++;
         }
 
@@ -288,7 +301,7 @@ public class SectionAllocation {
         if (!isAllocated(seat)) {
             throw new SeatAllocationException("Trying to deallocate an unallocated seat!");
         }
-        this.allocated[seat.getRowNumber()-1][seat.getNumber()-1] = false;
+        this.allocated[seat.getRowNumber()-1][seat.getNumber()-1] = SeatState.FREE;
         occupiedCount --;
     }
 

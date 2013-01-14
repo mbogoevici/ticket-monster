@@ -34,6 +34,10 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.transaction.LockingMode;
+import org.infinispan.transaction.TransactionMode;
+import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
 
 
@@ -47,18 +51,21 @@ import org.infinispan.util.concurrent.IsolationLevel;
 public class LocalCacheContainerProvider {
     private Logger log = Logger.getLogger(this.getClass().getName());
 
-    private BasicCacheContainer manager;
+    private EmbeddedCacheManager manager;
 
     @Produces
-    public BasicCacheContainer getCacheContainer() {
+    public EmbeddedCacheManager getCacheContainer() {
         if (manager == null) {
             GlobalConfiguration glob = new GlobalConfigurationBuilder()
                 .nonClusteredDefault() //Helper method that gets you a default constructed GlobalConfiguration, preconfigured for use in LOCAL mode
                 .globalJmxStatistics().enable() //This method allows enables the jmx statistics of the global configuration.
+                .transport().defaultTransport()
                 .build(); //Builds  the GlobalConfiguration object
             Configuration loc = new ConfigurationBuilder()
                 .jmxStatistics().enable() //Enable JMX statistics
-                .clustering().cacheMode(CacheMode.LOCAL) //Set Cache mode to LOCAL - Data is not replicated.
+                .clustering().cacheMode(CacheMode.REPL_SYNC) //Set Cache mode to LOCAL - Data is not replicated.
+                .transaction().transactionMode(TransactionMode.TRANSACTIONAL).transactionManagerLookup(new GenericTransactionManagerLookup())
+                .lockingMode(LockingMode.PESSIMISTIC)
                 .locking().isolationLevel(IsolationLevel.REPEATABLE_READ) //Sets the isolation level of locking
                 .eviction().maxEntries(4).strategy(EvictionStrategy.LIRS) //Sets  4 as maximum number of entries in a cache instance and uses the LIRS strategy - an efficient low inter-reference recency set replacement policy to improve buffer cache performance
                 .loaders().passivation(false).addFileCacheStore().purgeOnStartup(true) //Disable passivation and adds a FileCacheStore that is Purged on Startup

@@ -2,8 +2,12 @@ package org.jboss.jdf.example.ticketmonster.model;
 
 import javax.inject.Inject;
 
+import org.infinispan.Cache;
 import org.infinispan.api.BasicCache;
 import org.infinispan.api.BasicCacheContainer;
+import org.infinispan.manager.EmbeddedCacheManager;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Marius Bogoevici
@@ -12,12 +16,13 @@ public class DatagridCartStore implements CartStore {
 
     public static final String CARTS_CACHE = "carts";
 
-    private final BasicCache<String, Cart> cartsCache;
+    private final Cache<String, Cart> cartsCache;
 
     @Inject
-    public DatagridCartStore(BasicCacheContainer container) {
+    public DatagridCartStore(EmbeddedCacheManager manager) {
 
-        this.cartsCache = container.getCache(CARTS_CACHE);
+        this.cartsCache = manager.getCache(CARTS_CACHE);
+        this.cartsCache.addListener(new CartEntryListener());
     }
 
     @Override
@@ -27,7 +32,8 @@ public class DatagridCartStore implements CartStore {
 
     @Override
     public void saveCart(Cart cart) {
-        this.cartsCache.put(cart.getId(), cart);
+
+        this.cartsCache.put(cart.getId(), cart, 10, TimeUnit.MINUTES);
     }
 
     @Override

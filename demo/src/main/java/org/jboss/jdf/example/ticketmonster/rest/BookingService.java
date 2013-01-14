@@ -56,11 +56,11 @@ public class BookingService extends BaseEntityService<Booking> {
     @Inject
     SeatAllocationService seatAllocationService;
 
-    @Inject @Created
-    private Event<Booking> newBookingEvent;
-    
     @Inject @Cancelled
     private Event<Booking> cancelledBookingEvent;
+
+    @Inject @Created
+    private Event<Booking> newBookingEvent;
 
     @Inject
     private CartStore cartStore;
@@ -208,122 +208,6 @@ public class BookingService extends BaseEntityService<Booking> {
         }
     }
 
-
-    /**
-     * <p>
-     *   Create a booking. Data is contained in the bookingRequest object
-     * </p>
-     * @param bookingRequest
-     * @return
-     */
-    @SuppressWarnings("unchecked")
-    @POST
-    /**
-     * <p> Data is received in JSON format. For easy handling, it will be unmarshalled in the support
-     * {@link BookingRequest} class.
-     */
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Path("/cart/{id}")
-    public Response createBookingFromCart(@PathParam("id") String cartId, Map<String, String> data) {
-        try {
-            // identify the ticket price categories in this request
-
-            BookingRequest bookingRequest = new BookingRequest();
-
-            Cart cart = cartStore.getCart(cartId);
-            bookingRequest.setPerformance(cart.getPerformance().getId());
-            bookingRequest.setTicketRequests(cart.getTicketRequests());
-            bookingRequest.setEmail(data.get("email"));
-
-
-            Set<Long> priceCategoryIds = bookingRequest.getUniquePriceCategoryIds();
-
-            // load the entities that make up this booking's relationships
-            Performance performance = getEntityManager().find(Performance.class, bookingRequest.getPerformance());
-
-            // As we can have a mix of ticket types in a booking, we need to load all of them that are relevant,
-            // id
-            Map<Long, TicketPrice> ticketPricesById = loadTicketPrices(priceCategoryIds);
-
-            // Now, start to create the booking from the posted data
-            // Set the simple stuff first!
-            Booking booking = new Booking();
-            booking.setContactEmail(bookingRequest.getEmail());
-            booking.setPerformance(performance);
-            booking.setCancellationCode("abc");
-
-            // Now, we iterate over each ticket that was requested, and organize them by section and category
-            // we want to allocate ticket requests that belong to the same section contiguously
-            Map<Section, Map<TicketCategory, TicketRequest>> ticketRequestsPerSection
-                    = new TreeMap<Section, java.util.Map<TicketCategory, TicketRequest>>(SectionComparator.instance());
-            for (TicketRequest ticketRequest : bookingRequest.getTicketRequests()) {
-                final TicketPrice ticketPrice = ticketPricesById.get(ticketRequest.getTicketPrice().getId());
-                if (!ticketRequestsPerSection.containsKey(ticketPrice.getSection())) {
-                    ticketRequestsPerSection
-                            .put(ticketPrice.getSection(), new HashMap<TicketCategory, TicketRequest>());
-                }
-                ticketRequestsPerSection.get(ticketPrice.getSection()).put(
-                        ticketPricesById.get(ticketRequest.getTicketPrice().getId()).getTicketCategory(), ticketRequest);
-            }
-
-            // Now, we can allocate the tickets
-            // Iterate over the sections, finding the candidate seats for allocation
-            // The process will lock the record for a given
-            // Use deterministic ordering to prevent deadlocks
-            Map<Section, AllocatedSeats> seatsPerSection = new TreeMap<Section, org.jboss.jdf.example.ticketmonster.service.AllocatedSeats>(SectionComparator.instance());
-            List<Section> failedSections = new ArrayList<Section>();
-            for (Section section : ticketRequestsPerSection.keySet()) {
-                int totalTicketsRequestedPerSection = 0;
-                // Compute the total number of tickets required (a ticket category doesn't impact the actual seat!)
-                final Map<TicketCategory, TicketRequest> ticketRequestsByCategories = ticketRequestsPerSection.get(section);
-                // calculate the total quantity of tickets to be allocated in this section
-                for (TicketRequest ticketRequest : ticketRequestsByCategories.values()) {
-                    totalTicketsRequestedPerSection += ticketRequest.getQuantity();
-                }
-                // try to allocate seats
-
-                AllocatedSeats allocatedSeats = seatAllocationService.allocateSeats(section, performance, totalTicketsRequestedPerSection, true);
-                if (allocatedSeats.getSeats().size() == totalTicketsRequestedPerSection) {
-                    seatsPerSection.put(section, allocatedSeats);
-                } else {
-                    failedSections.add(section);
-                }
-            }
-            if (failedSections.isEmpty()) {
-                List<Ticket> tickets = generateTickets(ticketPricesById, ticketRequestsPerSection, seatsPerSection);
-                booking.getTickets().addAll(tickets);
-                // Persist the booking, including cascaded relationships
-                booking.setPerformance(performance);
-                booking.setCancellationCode("abc");
-                getEntityManager().persist(booking);
-                cartStore.delete(cart);
-                newBookingEvent.fire(booking);
-                return Response.ok().entity(booking).type(MediaType.APPLICATION_JSON_TYPE).build();
-            } else {
-                Map<String, Object> responseEntity = new HashMap<String, Object>();
-                responseEntity.put("errors", Collections.singletonList("Cannot allocate the requested number of seats!"));
-                return Response.status(Response.Status.BAD_REQUEST).entity(responseEntity).build();
-            }
-        } catch (ConstraintViolationException e) {
-            // If validation of the data failed using Bean Validation, then send an error
-            Map<String, Object> errors = new HashMap<String, Object>();
-            List<String> errorMessages = new ArrayList<String>();
-            for (ConstraintViolation<?> constraintViolation : e.getConstraintViolations()) {
-                errorMessages.add(constraintViolation.getMessage());
-            }
-            errors.put("errors", errorMessages);
-            // A WebApplicationException can wrap a response
-            // Throwing the exception causes an automatic rollback
-            throw new RestServiceException(Response.status(Response.Status.BAD_REQUEST).entity(errors).build());
-        } catch (Exception e) {
-            // Finally, handle unexpected exceptions
-            Map<String, Object> errors = new HashMap<String, Object>();
-            errors.put("errors", Collections.singletonList(e.getMessage()));
-            // A WebApplicationException can wrap a response
-            // Throwing the exception causes an automatic rollback
-            throw new RestServiceException(Response.status(Response.Status.BAD_REQUEST).entity(errors).build());
-        }
-    }
 
     private List<Ticket> generateTickets(Map<Long, TicketPrice> ticketPricesById, Map<Section, Map<TicketCategory, TicketRequest>> ticketRequestsPerSection, Map<Section, AllocatedSeats> seatsPerSection) {
         List<Ticket> tickets = new ArrayList<Ticket>();

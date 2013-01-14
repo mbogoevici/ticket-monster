@@ -1,6 +1,7 @@
 package org.jboss.jdf.example.ticketmonster.service;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -28,7 +29,7 @@ public class DatabaseSeatAllocationService implements Serializable, SeatAllocati
     @Override
     public AllocatedSeats allocateSeats(Section section, Performance performance, int seatCount, boolean contiguous) {
         SectionAllocation sectionAllocation = retrieveSectionAllocationExclusively(section, performance);
-        List<Seat> seats = sectionAllocation.allocateSeats(seatCount, contiguous);
+        ArrayList<Seat> seats = sectionAllocation.allocateSeats(seatCount, contiguous);
         return new AllocatedSeats(sectionAllocation, seats);
     }
 
@@ -46,6 +47,12 @@ public class DatabaseSeatAllocationService implements Serializable, SeatAllocati
     @Override
     public void finalizeAllocation(AllocatedSeats allocatedSeats) {
        allocatedSeats.markOccupied();
+    }
+
+    @Override
+    public void finalizeAllocation(Performance performance, List<Seat> allocatedSeats) {
+        SectionAllocation sectionAllocation = retrieveSectionAllocationExclusively(allocatedSeats.get(0).getSection(), performance);
+        sectionAllocation.markOccupied(allocatedSeats);
     }
 
     private SectionAllocation retrieveSectionAllocationExclusively(Section section, Performance performance) {

@@ -16,8 +16,25 @@ public class Cart implements Serializable  {
 
     private Performance performance;
 
-    private ArrayList<TicketRequest> ticketRequests = new ArrayList<TicketRequest>();
+    private ArrayList<SeatAllocation> seatAllocations = new ArrayList<SeatAllocation>();
 
+    public static class SeatAllocation {
+       private TicketRequest ticketRequest;
+       private ArrayList<Seat> allocatedSeats;
+
+        public SeatAllocation(TicketRequest ticketRequest, ArrayList<Seat> allocatedSeats) {
+            this.ticketRequest = ticketRequest;
+            this.allocatedSeats = allocatedSeats;
+        }
+
+        public TicketRequest getTicketRequest() {
+            return ticketRequest;
+        }
+
+        public ArrayList<Seat> getAllocatedSeats() {
+            return allocatedSeats;
+        }
+    }
 
     private Cart() {
     }
@@ -42,8 +59,7 @@ public class Cart implements Serializable  {
         this.performance = performance;
     }
 
-    public List<TicketRequest> getTicketRequests() {
-        return ticketRequests;
+    public ArrayList<SeatAllocation> getSeatAllocations() {
+        return seatAllocations;
     }
-
 }

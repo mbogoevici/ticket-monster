@@ -16,4 +16,6 @@ public interface SeatAllocationService {
     void deallocateSeats(Section section, Performance performance, List<Seat> seats);
 
     void finalizeAllocation(AllocatedSeats allocatedSeats);
+
+    void finalizeAllocation(Performance performance, List<Seat> allocatedSeats);
 }
