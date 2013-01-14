@@ -21,8 +21,8 @@ public class TicketReservationRequest {
         // Empty constructor
     }
 
-    public TicketReservationRequest(TicketPrice ticketPrice, int quantity) {
-        this.ticketPrice = ticketPrice.getId();
+    public TicketReservationRequest(Long ticketPrice, int quantity) {
+        this.ticketPrice = ticketPrice;
         this.quantity = quantity;
     }
 
