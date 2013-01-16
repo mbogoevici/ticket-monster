@@ -1,17 +1,13 @@
-package org.jboss.jdf.ticketmonster.datagrid;
+package org.jboss.jdf.example.ticketmonster.datagrid;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
-import javax.transaction.*;
 
 import org.infinispan.Cache;
-import org.infinispan.api.BasicCache;
-import org.infinispan.api.BasicCacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.util.concurrent.locks.LockManager;
 import org.jboss.jdf.example.ticketmonster.model.*;
 import org.jboss.jdf.example.ticketmonster.service.AllocatedSeats;
 import org.jboss.jdf.example.ticketmonster.service.SeatAllocationService;

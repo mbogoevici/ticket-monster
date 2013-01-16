@@ -1,4 +1,4 @@
-package org.jboss.jdf.ticketmonster.datagrid;
+package org.jboss.jdf.example.ticketmonster.datagrid;
 
 /**
  * Created with IntelliJ IDEA.

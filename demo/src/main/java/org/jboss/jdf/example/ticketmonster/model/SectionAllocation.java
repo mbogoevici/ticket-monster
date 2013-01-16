@@ -1,13 +1,12 @@
 package org.jboss.jdf.example.ticketmonster.model;
 
-import org.jboss.jdf.ticketmonster.datagrid.SeatState;
+import org.jboss.jdf.example.ticketmonster.datagrid.SeatState;
 
 import static javax.persistence.GenerationType.IDENTITY;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import javax.persistence.Entity;

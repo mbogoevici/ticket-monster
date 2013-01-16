@@ -1,4 +1,4 @@
-package org.jboss.jdf.ticketmonster.datagrid;
+package org.jboss.jdf.example.ticketmonster.datagrid;
 
 import org.jboss.jdf.example.ticketmonster.model.Performance;
 import org.jboss.jdf.example.ticketmonster.model.Section;
