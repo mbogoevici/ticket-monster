@@ -26,7 +26,6 @@ import javax.annotation.PreDestroy;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
 
-import org.infinispan.api.BasicCacheContainer;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -63,7 +62,7 @@ public class LocalCacheContainerProvider {
                 .build(); //Builds  the GlobalConfiguration object
             Configuration loc = new ConfigurationBuilder()
                 .jmxStatistics().enable() //Enable JMX statistics
-                .clustering().cacheMode(CacheMode.REPL_SYNC) //Set Cache mode to LOCAL - Data is not replicated.
+                .clustering().cacheMode(CacheMode.LOCAL) //Set Cache mode to LOCAL - Data is not replicated.
                 .transaction().transactionMode(TransactionMode.TRANSACTIONAL).transactionManagerLookup(new GenericTransactionManagerLookup())
                 .lockingMode(LockingMode.PESSIMISTIC)
                 .locking().isolationLevel(IsolationLevel.REPEATABLE_READ) //Sets the isolation level of locking

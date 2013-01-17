@@ -21,7 +21,7 @@ public class DatagridSeatAllocationService implements SeatAllocationService {
 
     public static final String ALLOCATIONS = "TICKETMONSTER_ALLOCATIONS";
 
-    private final Cache<AllocationKey, SectionAllocation> cache;
+    private final Cache<SectionAllocationKey, SectionAllocation> cache;
 
     @Inject
     public DatagridSeatAllocationService(EmbeddedCacheManager basicCacheContainer) {
@@ -31,19 +31,19 @@ public class DatagridSeatAllocationService implements SeatAllocationService {
 
     @Override
     public AllocatedSeats allocateSeats(Section section, Performance performance, int seatCount, boolean contiguous) {
-        AllocationKey allocationKey = AllocationKey.of(section, performance);
-        cache.putIfAbsent(allocationKey, new SectionAllocation(performance, section));
-        cache.getAdvancedCache().lock(allocationKey);
-        SectionAllocation allocation = cache.get(allocationKey);
+        SectionAllocationKey sectionAllocationKey = SectionAllocationKey.of(section, performance);
+        cache.putIfAbsent(sectionAllocationKey, new SectionAllocation(performance, section));
+        cache.getAdvancedCache().lock(sectionAllocationKey);
+        SectionAllocation allocation = cache.get(sectionAllocationKey);
         ArrayList<Seat> seats = allocation.allocateSeats(seatCount, contiguous);
-        cache.put(allocationKey, allocation);
+        cache.put(sectionAllocationKey, allocation);
         return new AllocatedSeats(allocation, seats);
     }
 
     @Override
     public void deallocateSeats(Section section, Performance performance, List<Seat> seats) {
-        cache.putIfAbsent(AllocationKey.of(section, performance), new SectionAllocation());
-        SectionAllocation sectionAllocation = cache.get(AllocationKey.of(section, performance));
+        cache.putIfAbsent(SectionAllocationKey.of(section, performance), new SectionAllocation());
+        SectionAllocation sectionAllocation = cache.get(SectionAllocationKey.of(section, performance));
         for (Seat seat : seats) {
             if (!seat.getSection().equals(section)) {
                 throw new SeatAllocationException("All seats must be in the same section!");
@@ -59,7 +59,7 @@ public class DatagridSeatAllocationService implements SeatAllocationService {
 
     @Override
     public void finalizeAllocation(Performance performance, List<Seat> allocatedSeats) {
-            SectionAllocation sectionAllocation = cache.get(AllocationKey.of(allocatedSeats.get(0).getSection(), performance));
+            SectionAllocation sectionAllocation = cache.get(SectionAllocationKey.of(allocatedSeats.get(0).getSection(), performance));
             sectionAllocation.markOccupied(allocatedSeats);
     }
 }
