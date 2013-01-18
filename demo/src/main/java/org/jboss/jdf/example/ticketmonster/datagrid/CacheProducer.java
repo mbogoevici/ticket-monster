@@ -26,6 +26,7 @@ import javax.annotation.PreDestroy;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
 
+import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -38,6 +39,8 @@ import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
+import org.jboss.jdf.example.ticketmonster.model.Cart;
+import org.jboss.jdf.example.ticketmonster.model.SectionAllocation;
 
 
 /**
@@ -47,7 +50,7 @@ import org.infinispan.util.concurrent.IsolationLevel;
  * 
  */
 @ApplicationScoped
-public class LocalCacheContainerProvider {
+public class CacheProducer {
     private Logger log = Logger.getLogger(this.getClass().getName());
 
     private EmbeddedCacheManager manager;
@@ -64,15 +67,29 @@ public class LocalCacheContainerProvider {
                 .jmxStatistics().enable() //Enable JMX statistics
                 .clustering().cacheMode(CacheMode.LOCAL) //Set Cache mode to LOCAL - Data is not replicated.
                 .transaction().transactionMode(TransactionMode.TRANSACTIONAL).transactionManagerLookup(new GenericTransactionManagerLookup())
-                .lockingMode(LockingMode.PESSIMISTIC)
                 .locking().isolationLevel(IsolationLevel.REPEATABLE_READ) //Sets the isolation level of locking
                 .eviction().maxEntries(4).strategy(EvictionStrategy.LIRS) //Sets  4 as maximum number of entries in a cache instance and uses the LIRS strategy - an efficient low inter-reference recency set replacement policy to improve buffer cache performance
-                .loaders().passivation(false).addFileCacheStore().purgeOnStartup(true) //Disable passivation and adds a FileCacheStore that is Purged on Startup
                 .build(); //Builds the Configuration object
             manager = new DefaultCacheManager(glob, loc, true);
             log.info("=== Using DefaultCacheManager (library mode) ===");
         }
         return manager;
+    }
+
+
+    @Produces @ApplicationScoped @CartCache
+    public Cache<String, Cart> produceCartCache(EmbeddedCacheManager manager) {
+        return manager.getCache();
+    }
+
+    @Produces @ApplicationScoped @AllocationCache
+    public Cache<SectionAllocationKey, SectionAllocation> produceAllocationCache(EmbeddedCacheManager manager) {
+        Configuration allocation = new ConfigurationBuilder()
+                .transaction().lockingMode(LockingMode.PESSIMISTIC)
+                .loaders().addFileCacheStore().purgeOnStartup(true)
+                .build();
+        manager.defineConfiguration("allocation", allocation);
+        return manager.getCache("allocation");
     }
 
     @PreDestroy

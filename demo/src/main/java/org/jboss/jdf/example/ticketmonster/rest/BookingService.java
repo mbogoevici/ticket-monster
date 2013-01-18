@@ -21,8 +21,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import org.jboss.jdf.example.ticketmonster.model.Cart;
-import org.jboss.jdf.example.ticketmonster.model.CartStore;
+import org.jboss.jdf.example.ticketmonster.datagrid.CartStore;
 import org.jboss.jdf.example.ticketmonster.monitor.client.shared.qualifier.Cancelled;
 import org.jboss.jdf.example.ticketmonster.monitor.client.shared.qualifier.Created;
 import org.jboss.jdf.example.ticketmonster.model.Booking;
@@ -61,9 +60,6 @@ public class BookingService extends BaseEntityService<Booking> {
 
     @Inject @Created
     private Event<Booking> newBookingEvent;
-
-    @Inject
-    private CartStore cartStore;
     
     public BookingService() {
         super(Booking.class);

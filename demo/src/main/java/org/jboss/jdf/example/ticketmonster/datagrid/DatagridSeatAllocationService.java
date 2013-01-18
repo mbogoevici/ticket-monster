@@ -21,13 +21,8 @@ public class DatagridSeatAllocationService implements SeatAllocationService {
 
     public static final String ALLOCATIONS = "TICKETMONSTER_ALLOCATIONS";
 
-    private final Cache<SectionAllocationKey, SectionAllocation> cache;
-
-    @Inject
-    public DatagridSeatAllocationService(EmbeddedCacheManager basicCacheContainer) {
-        this.cache = basicCacheContainer.getCache(ALLOCATIONS);
-    }
-
+    @Inject @AllocationCache
+    private Cache<SectionAllocationKey, SectionAllocation> cache;
 
     @Override
     public AllocatedSeats allocateSeats(Section section, Performance performance, int seatCount, boolean contiguous) {
