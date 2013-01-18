@@ -18,8 +18,12 @@ import javax.ws.rs.core.Response;
 
 import org.infinispan.Cache;
 import org.jboss.jdf.example.ticketmonster.datagrid.CartCache;
-import org.jboss.jdf.example.ticketmonster.datagrid.CartStore;
-import org.jboss.jdf.example.ticketmonster.model.*;
+import org.jboss.jdf.example.ticketmonster.model.Booking;
+import org.jboss.jdf.example.ticketmonster.model.Cart;
+import org.jboss.jdf.example.ticketmonster.model.Performance;
+import org.jboss.jdf.example.ticketmonster.model.Seat;
+import org.jboss.jdf.example.ticketmonster.model.Ticket;
+import org.jboss.jdf.example.ticketmonster.model.TicketPrice;
 import org.jboss.jdf.example.ticketmonster.monitor.client.shared.qualifier.Created;
 import org.jboss.jdf.example.ticketmonster.service.AllocatedSeats;
 import org.jboss.jdf.example.ticketmonster.service.SeatAllocationService;

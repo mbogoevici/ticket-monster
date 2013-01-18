@@ -21,7 +21,6 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import org.jboss.jdf.example.ticketmonster.datagrid.CartStore;
 import org.jboss.jdf.example.ticketmonster.monitor.client.shared.qualifier.Cancelled;
 import org.jboss.jdf.example.ticketmonster.monitor.client.shared.qualifier.Created;
 import org.jboss.jdf.example.ticketmonster.model.Booking;
