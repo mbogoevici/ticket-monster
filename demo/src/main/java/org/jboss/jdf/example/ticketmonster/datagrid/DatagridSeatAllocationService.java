@@ -7,7 +7,12 @@ import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
 
 import org.infinispan.Cache;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.transaction.LockingMode;
+import org.infinispan.transaction.TransactionMode;
+import org.infinispan.transaction.lookup.JBossTransactionManagerLookup;
 import org.jboss.jdf.example.ticketmonster.model.*;
 import org.jboss.jdf.example.ticketmonster.service.AllocatedSeats;
 import org.jboss.jdf.example.ticketmonster.service.SeatAllocationService;
@@ -21,8 +26,19 @@ public class DatagridSeatAllocationService implements SeatAllocationService {
 
     public static final String ALLOCATIONS = "TICKETMONSTER_ALLOCATIONS";
 
-    @Inject @AllocationCache
     private Cache<SectionAllocationKey, SectionAllocation> cache;
+
+    @Inject
+    public DatagridSeatAllocationService(EmbeddedCacheManager manager) {
+
+        Configuration allocation = new ConfigurationBuilder()
+                .transaction().transactionMode(TransactionMode.TRANSACTIONAL)
+                .transactionManagerLookup(new JBossTransactionManagerLookup()).lockingMode(LockingMode.PESSIMISTIC)
+                .loaders().addFileCacheStore().purgeOnStartup(true)
+                .build();
+        manager.defineConfiguration("allocation", allocation);
+        this.cache = manager.getCache("allocation");
+    }
 
     @Override
     public AllocatedSeats allocateSeats(Section section, Performance performance, int seatCount, boolean contiguous) {

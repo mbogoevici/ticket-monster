@@ -17,7 +17,9 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import org.infinispan.Cache;
-import org.jboss.jdf.example.ticketmonster.datagrid.CartCache;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.jboss.jdf.example.ticketmonster.datagrid.CartEntryListener;
+import org.jboss.jdf.example.ticketmonster.datagrid.CartStore;
 import org.jboss.jdf.example.ticketmonster.model.Booking;
 import org.jboss.jdf.example.ticketmonster.model.Cart;
 import org.jboss.jdf.example.ticketmonster.model.Performance;
@@ -35,8 +37,10 @@ import org.jboss.jdf.example.ticketmonster.service.SeatAllocationService;
 @Stateless
 public class CartService {
 
-    @Inject @CartCache
-    private Cache<String, Cart> cartCache;
+    public static final String CARTS_CACHE = "CARTS";
+
+    @Inject
+    private CartStore cartStore;
 
     @Inject
     private EntityManager entityManager;
@@ -50,25 +54,26 @@ public class CartService {
     @Inject @Created
     private javax.enterprise.event.Event<Booking> newBookingEvent;
 
+
     @POST
     public Cart openCart(Map<String, String> data) {
         Cart cart = Cart.initialize();
         cart.setPerformance(entityManager.find(Performance.class, Long.parseLong(data.get("performance"))));
-        cartCache.put(cart.getId(), cart, 60, TimeUnit.MINUTES, 30, TimeUnit.MINUTES);
+        cartStore.saveCart(cart);
         return cart;
     }
 
     @GET
     @Path("/{id}")
     public Cart getCart(String id) {
-      return cartCache.get(id);
+      return cartStore.getCart(id);
     }
 
     @POST
     @Path("/{id}")
     @Consumes(MediaType.APPLICATION_JSON)
     public Cart addTicketRequest(@PathParam("id") String id, TicketReservationRequest... ticketRequests){
-        Cart cart = cartCache.get(id);
+        Cart cart = cartStore.getCart(id);
 
         for (TicketReservationRequest ticketRequest : ticketRequests) {
             TicketPrice ticketPrice = entityManager.find(TicketPrice.class, ticketRequest.getTicketPrice());
@@ -112,7 +117,7 @@ public class CartService {
             // identify the ticket price categories in this request
 
 
-            Cart cart = cartCache.get(cartId);
+            Cart cart = cartStore.getCart(cartId);
 
             // load the entities that make up this booking's relationships
 
@@ -134,7 +139,7 @@ public class CartService {
 
             booking.setCancellationCode("abc");
             entityManager.persist(booking);
-            cartCache.remove(cart);
+            cartStore.delete(cart);
             newBookingEvent.fire(booking);
             return Response.ok().entity(booking).type(MediaType.APPLICATION_JSON_TYPE).build();
 

@@ -22,6 +22,7 @@
 package org.jboss.jdf.example.ticketmonster.datagrid;
 
 import java.util.logging.Logger;
+import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
@@ -59,37 +60,23 @@ public class CacheProducer {
     public EmbeddedCacheManager getCacheContainer() {
         if (manager == null) {
             GlobalConfiguration glob = new GlobalConfigurationBuilder()
-                .nonClusteredDefault() //Helper method that gets you a default constructed GlobalConfiguration, preconfigured for use in LOCAL mode
-                .globalJmxStatistics().enable() //This method allows enables the jmx statistics of the global configuration.
-                .transport().defaultTransport()
-                .build(); //Builds  the GlobalConfiguration object
+                    .nonClusteredDefault() //Helper method that gets you a default constructed GlobalConfiguration, preconfigured for use in LOCAL mode
+                    .globalJmxStatistics().enable() //This method allows enables the jmx statistics of the global configuration.
+                    .transport().defaultTransport()
+                    .build(); //Builds  the GlobalConfiguration object
             Configuration loc = new ConfigurationBuilder()
-                .jmxStatistics().enable() //Enable JMX statistics
-                .clustering().cacheMode(CacheMode.LOCAL) //Set Cache mode to LOCAL - Data is not replicated.
-                .transaction().transactionMode(TransactionMode.TRANSACTIONAL).transactionManagerLookup(new GenericTransactionManagerLookup())
-                .locking().isolationLevel(IsolationLevel.REPEATABLE_READ) //Sets the isolation level of locking
-                .eviction().maxEntries(4).strategy(EvictionStrategy.LIRS) //Sets  4 as maximum number of entries in a cache instance and uses the LIRS strategy - an efficient low inter-reference recency set replacement policy to improve buffer cache performance
-                .build(); //Builds the Configuration object
+                    .jmxStatistics().enable() //Enable JMX statistics
+                    .clustering().cacheMode(CacheMode.LOCAL) //Set Cache mode to LOCAL - Data is not replicated.
+                    .transaction().transactionMode(TransactionMode.TRANSACTIONAL).transactionManagerLookup(new GenericTransactionManagerLookup())
+                    .lockingMode(LockingMode.PESSIMISTIC)
+                    .locking().isolationLevel(IsolationLevel.REPEATABLE_READ) //Sets the isolation level of locking
+                    .eviction().maxEntries(4).strategy(EvictionStrategy.LIRS) //Sets  4 as maximum number of entries in a cache instance and uses the LIRS strategy - an efficient low inter-reference recency set replacement policy to improve buffer cache performance
+                    .loaders().passivation(false).addFileCacheStore().purgeOnStartup(true) //Disable passivation and adds a FileCacheStore that is Purged on Startup
+                    .build(); //Builds the Configuration object
             manager = new DefaultCacheManager(glob, loc, true);
             log.info("=== Using DefaultCacheManager (library mode) ===");
         }
         return manager;
-    }
-
-
-    @Produces @ApplicationScoped @CartCache
-    public Cache<String, Cart> produceCartCache(EmbeddedCacheManager manager) {
-        return manager.getCache();
-    }
-
-    @Produces @ApplicationScoped @AllocationCache
-    public Cache<SectionAllocationKey, SectionAllocation> produceAllocationCache(EmbeddedCacheManager manager) {
-        Configuration allocation = new ConfigurationBuilder()
-                .transaction().lockingMode(LockingMode.PESSIMISTIC)
-                .loaders().addFileCacheStore().purgeOnStartup(true)
-                .build();
-        manager.defineConfiguration("allocation", allocation);
-        return manager.getCache("allocation");
     }
 
     @PreDestroy
